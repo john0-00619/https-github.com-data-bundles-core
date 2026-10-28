@@ -16,6 +16,7 @@ Built for churches in Ghana and across Africa, with a design that works beautifu
 - 🤝 **Follow-Up System** — Track visitors, new believers and pastoral care tasks with priority levels
 - 🙏 **Prayer Requests** — Submit and track prayer needs, mark as answered
 - 📢 **Announcements** — Share news with your church community, pin important updates
+- 💬 **Communication Centre** — WhatsApp click-to-chat, SMS via TextBee, Gmail campaigns
 - 📊 **Reports & Analytics** — Insights into membership growth, giving patterns, attendance trends
 - 🔐 **Multi-Tenant Security** — Row-Level Security ensures complete data isolation between organizations
 - 📱 **Mobile Responsive** — Works beautifully on phones, tablets and desktops
