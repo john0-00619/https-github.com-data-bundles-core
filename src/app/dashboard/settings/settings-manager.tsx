@@ -9,21 +9,25 @@ import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { Table } from "@/components/ui/table";
-import { Plus, Building2, UserPlus } from "lucide-react";
+import { Plus, Building2, UserPlus, Link as LinkIcon, Copy, Trash2, Clock, CheckCircle } from "lucide-react";
+import { formatDate, formatDateTime } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
 interface SettingsManagerProps {
   organization: any;
   branches: any[];
   members: any[];
+  invitations: any[];
   currentUserId: string;
   currentRole: string;
 }
 
-export function SettingsManager({ organization, branches, members, currentUserId, currentRole }: SettingsManagerProps) {
+export function SettingsManager({ organization, branches, members, invitations, currentUserId, currentRole }: SettingsManagerProps) {
   const [showInvite, setShowInvite] = useState(false);
   const [showBranch, setShowBranch] = useState(false);
+  const [showRoleChange, setShowRoleChange] = useState<any>(null);
   const [saving, setSaving] = useState(false);
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [inviteForm, setInviteForm] = useState({ email: "", role: "viewer" });
   const [branchForm, setBranchForm] = useState({ name: "", description: "" });
   const supabase = createClient();
@@ -67,10 +71,75 @@ export function SettingsManager({ organization, branches, members, currentUserId
     finally { setSaving(false); }
   };
 
+  const copyInviteLink = async (token: string) => {
+    const link = `${window.location.origin}/auth/accept-invitation?token=${token}`;
+    await navigator.clipboard.writeText(link);
+    setCopiedLink(token);
+    setTimeout(() => setCopiedLink(null), 2000);
+  };
+
+  const handleChangeRole = async (memberId: string, newRole: string) => {
+    const { error } = await supabase
+      .from("organization_members")
+      .update({ role: newRole, updated_at: new Date().toISOString() })
+      .eq("id", memberId);
+    if (error) {
+      alert("Failed to update role: " + error.message);
+    } else {
+      window.location.reload();
+    }
+    setShowRoleChange(null);
+  };
+
+  const handleRemoveMember = async (memberId: string, name: string) => {
+    if (!confirm(`Remove ${name} from the organization?`)) return;
+    const { error } = await supabase
+      .from("organization_members")
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq("id", memberId);
+    if (error) {
+      alert("Failed to remove member: " + error.message);
+    } else {
+      window.location.reload();
+    }
+  };
+
+  const handleCancelInvitation = async (invitationId: string) => {
+    if (!confirm("Cancel this invitation?")) return;
+    const { error } = await supabase
+      .from("invitations")
+      .update({ status: "cancelled", updated_at: new Date().toISOString() })
+      .eq("id", invitationId);
+    if (error) {
+      alert("Failed to cancel invitation: " + error.message);
+    } else {
+      window.location.reload();
+    }
+  };
+
   const memberColumns = [
     { key: "name", header: "Name", render: (_: any, row: any) => <span className="font-medium text-gray-900">{row.profile?.full_name || "—"}</span> },
     { key: "email", header: "Email", render: (_: any, row: any) => <span className="text-gray-600">{row.profile?.email || "—"}</span> },
     { key: "role", header: "Role", render: (val: string) => <Badge variant="secondary">{val.replace("_", " ")}</Badge> },
+    ...(canManage ? [{
+      key: "actions",
+      header: "",
+      render: (_: any, row: any) => {
+        const isOwner = row.role === "owner";
+        const isSelf = row.user_id === currentUserId;
+        if (isOwner || isSelf) return null;
+        return (
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => setShowRoleChange(row)}>
+              Change Role
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => handleRemoveMember(row.id, row.profile?.full_name)}>
+              <Trash2 className="h-4 w-4 text-red-600" />
+            </Button>
+          </div>
+        );
+      },
+    }] : []),
   ];
 
   return (
@@ -163,6 +232,72 @@ export function SettingsManager({ organization, branches, members, currentUserId
               </div>
             ),
           },
+          {
+            id: "invitations",
+            label: `Invitations${invitations.length > 0 ? ` (${invitations.length})` : ""}`,
+            content: (
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Pending Invitations</CardTitle>
+                    <CardDescription>Invitations that haven't been accepted yet</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {invitations.length === 0 ? (
+                      <p className="text-gray-500 text-center py-8">No pending invitations</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {invitations.map((inv: any) => (
+                          <div key={inv.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-gray-900">{inv.email}</p>
+                                <Badge variant="secondary">{inv.role.replace("_", " ")}</Badge>
+                              </div>
+                              <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                                <Clock className="h-3 w-3" />
+                                <span>Sent {formatDateTime(inv.created_at)}</span>
+                                <span className="mx-1">•</span>
+                                <span>Expires {formatDate(inv.expires_at)}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => copyInviteLink(inv.token)}
+                                title="Copy invitation link"
+                              >
+                                {copiedLink === inv.token ? (
+                                  <CheckCircle className="h-4 w-4 text-green-600" />
+                                ) : (
+                                  <LinkIcon className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleCancelInvitation(inv.id)}
+                                title="Cancel invitation"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900">
+                  <p className="font-medium mb-1">💡 Invitation Links</p>
+                  <p className="text-blue-700">
+                    Click the link icon to copy the invitation URL. Share it with the invitee via email, WhatsApp, or any messaging platform.
+                  </p>
+                </div>
+              </div>
+            ),
+          },
         ]}
       />
 
@@ -191,6 +326,34 @@ export function SettingsManager({ organization, branches, members, currentUserId
             <Button type="submit" disabled={saving}>{saving ? "Creating..." : "Create Branch"}</Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal isOpen={!!showRoleChange} onClose={() => setShowRoleChange(null)} title="Change Role">
+        {showRoleChange && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Change role for <strong>{showRoleChange.profile?.full_name}</strong>
+            </p>
+            <Select
+              label="New Role"
+              options={[
+                { value: "admin", label: "Administrator" },
+                { value: "senior_pastor", label: "Senior Pastor" },
+                { value: "pastor", label: "Pastor" },
+                { value: "secretary", label: "Secretary" },
+                { value: "finance_officer", label: "Finance Officer" },
+                { value: "department_leader", label: "Department Leader" },
+                { value: "follow_up_officer", label: "Follow-Up Officer" },
+                { value: "viewer", label: "Viewer" },
+              ]}
+              value={showRoleChange.role}
+              onChange={(e) => handleChangeRole(showRoleChange.id, e.target.value)}
+            />
+            <div className="flex justify-end gap-3 pt-4">
+              <Button variant="outline" onClick={() => setShowRoleChange(null)}>Cancel</Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );
