@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { StatCard } from "@/components/ui/stat-card";
-import { Users, Calendar, DollarSign, UserCheck, TrendingUp, Church } from "lucide-react";
+import { Users, Calendar, DollarSign, UserCheck, TrendingUp, Church, UserPlus, Building2, Bell, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 export default async function DashboardPage() {
@@ -51,11 +51,17 @@ export default async function DashboardPage() {
     { count: eventCount },
     { data: givingData },
     { count: followUpCount },
+    { count: visitorCount },
+    { count: departmentCount },
+    { count: announcementCount },
   ] = await Promise.all([
     supabase.from("members").select("*", { count: "exact", head: true }).eq("organization_id", orgId).eq("status", "active"),
     supabase.from("events").select("*", { count: "exact", head: true }).eq("organization_id", orgId).gte("start_time", new Date().toISOString()),
     supabase.from("giving_records").select("amount").eq("organization_id", orgId).gte("given_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
     supabase.from("follow_ups").select("*", { count: "exact", head: true }).eq("organization_id", orgId).in("status", ["open", "in_progress"]),
+    supabase.from("visitors").select("*", { count: "exact", head: true }).eq("organization_id", orgId).eq("follow_up_status", "new"),
+    supabase.from("departments").select("*", { count: "exact", head: true }).eq("organization_id", orgId).eq("status", "active"),
+    supabase.from("announcements").select("*", { count: "exact", head: true }).eq("organization_id", orgId).eq("status", "published"),
   ]);
 
   const totalGiving = givingData?.reduce((sum, g) => sum + (g.amount || 0), 0) || 0;
@@ -102,10 +108,10 @@ export default async function DashboardPage() {
             icon={<Users className="h-6 w-6" />}
           />
           <StatCard
-            title="Upcoming Events"
-            value={eventCount || 0}
-            description="Scheduled"
-            icon={<Calendar className="h-6 w-6" />}
+            title="New Visitors"
+            value={visitorCount || 0}
+            description="Awaiting follow-up"
+            icon={<UserPlus className="h-6 w-6" />}
           />
           <StatCard
             title="Giving (30 days)"
@@ -114,22 +120,23 @@ export default async function DashboardPage() {
             icon={<DollarSign className="h-6 w-6" />}
           />
           <StatCard
-            title="Open Follow-Ups"
-            value={followUpCount || 0}
-            description="Tasks pending"
-            icon={<UserCheck className="h-6 w-6" />}
+            title="Departments"
+            value={departmentCount || 0}
+            description={`${followUpCount || 0} open follow-ups`}
+            icon={<Building2 className="h-6 w-6" />}
           />
         </div>
 
         {/* Quick Actions */}
         <div>
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {[
               { name: "Add Member", href: "/dashboard/members/new", icon: Users, color: "bg-blue-50 text-blue-600" },
               { name: "Take Attendance", href: "/dashboard/attendance/new", icon: TrendingUp, color: "bg-green-50 text-green-600" },
               { name: "Create Event", href: "/dashboard/events/new", icon: Calendar, color: "bg-purple-50 text-purple-600" },
               { name: "Record Giving", href: "/dashboard/giving/new", icon: DollarSign, color: "bg-yellow-50 text-yellow-600" },
+              { name: "AI Assistant", href: "/dashboard/assistant", icon: Sparkles, color: "bg-indigo-50 text-indigo-600" },
             ].map((action) => (
               <Link
                 key={action.name}
