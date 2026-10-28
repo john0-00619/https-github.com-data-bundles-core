@@ -21,6 +21,7 @@ import {
   FileText,
   BarChart3,
   Building2,
+  MessageSquare,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 
@@ -47,6 +48,7 @@ const navigation = [
   { name: "Follow-Ups", href: "/dashboard/followups", icon: UserCheck },
   { name: "Prayer Requests", href: "/dashboard/prayer-requests", icon: Heart },
   { name: "Announcements", href: "/dashboard/announcements", icon: Bell },
+  { name: "Communication", href: "/dashboard/communication", icon: MessageSquare },
   { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
