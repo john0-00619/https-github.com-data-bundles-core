@@ -22,8 +22,11 @@ import {
   BarChart3,
   Building2,
   MessageSquare,
+  UserPlus,
+  CreditCard,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { NotificationCenter } from "@/components/features/notification-center";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -41,6 +44,7 @@ interface DashboardLayoutProps {
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Members", href: "/dashboard/members", icon: Users },
+  { name: "Visitors", href: "/dashboard/visitors", icon: UserPlus },
   { name: "Attendance", href: "/dashboard/attendance", icon: ClipboardCheck },
   { name: "Events", href: "/dashboard/events", icon: Calendar },
   { name: "Departments", href: "/dashboard/departments", icon: Building2 },
@@ -50,6 +54,7 @@ const navigation = [
   { name: "Announcements", href: "/dashboard/announcements", icon: Bell },
   { name: "Communication", href: "/dashboard/communication", icon: MessageSquare },
   { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
+  { name: "Plans", href: "/dashboard/plans", icon: CreditCard },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
@@ -139,26 +144,31 @@ function DashboardLayout({ children, user, organization }: DashboardLayoutProps)
             })}
           </nav>
           {user && (
-            <div className="border-t border-gray-200 p-4">
-              <div className="flex items-center gap-3">
-                <Avatar
-                  src={user.avatar_url}
-                  fallback={user.name}
-                  size="md"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {user.name}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+            <div className="border-t border-gray-200 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <Avatar
+                    src={user.avatar_url}
+                    fallback={user.name}
+                    size="md"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {user.name}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  </div>
                 </div>
-                <Link
-                  href="/auth/logout"
-                  className="text-gray-400 hover:text-gray-600"
-                  title="Sign out"
-                >
+                <div className="flex items-center gap-1">
+                  <NotificationCenter />
+                  <Link
+                    href="/auth/logout"
+                    className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                    title="Sign out"
+                  >
                   <LogOut className="h-5 w-5" />
-                </Link>
+                  </Link>
+                </div>
               </div>
             </div>
           )}
