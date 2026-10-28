@@ -24,6 +24,8 @@ import {
   MessageSquare,
   UserPlus,
   CreditCard,
+  Shield,
+  Sparkles,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { NotificationCenter } from "@/components/features/notification-center";
@@ -43,6 +45,7 @@ interface DashboardLayoutProps {
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "AI Assistant", href: "/dashboard/assistant", icon: Sparkles },
   { name: "Members", href: "/dashboard/members", icon: Users },
   { name: "Visitors", href: "/dashboard/visitors", icon: UserPlus },
   { name: "Attendance", href: "/dashboard/attendance", icon: ClipboardCheck },
@@ -53,6 +56,8 @@ const navigation = [
   { name: "Prayer Requests", href: "/dashboard/prayer-requests", icon: Heart },
   { name: "Announcements", href: "/dashboard/announcements", icon: Bell },
   { name: "Communication", href: "/dashboard/communication", icon: MessageSquare },
+  { name: "Forms", href: "/dashboard/forms", icon: FileText },
+  { name: "Audit Logs", href: "/dashboard/audit-logs", icon: Shield },
   { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
   { name: "Plans", href: "/dashboard/plans", icon: CreditCard },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
